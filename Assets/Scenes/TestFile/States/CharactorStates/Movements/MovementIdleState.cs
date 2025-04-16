@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class MovementIdleState : CharacterMovementState
 {
+    private static int aniName;
     public MovementIdleState(IWeaponAnimationStrategy iWeaponAnimationStrategy) : base(iWeaponAnimationStrategy)
     {
-
+        aniName = Animator.StringToHash(_aniStrategy.GetAnimationName("MovementIdle"));
     }
     public override void Enter(CharacterController characterController)
     {
+        characterController.Animator.Play(aniName);
         base.Enter(characterController);
     }
     public override void Exit()

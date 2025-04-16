@@ -29,21 +29,26 @@ public enum MovementState
 public class CharacterController : MonoBehaviour
 {
     [Header("FSM")]
-    private FSM<ActionState> _actionFSM;
-    private FSM<PostureState> _PostureFSM;
-    private FSM<MovementState> _MovementFSM;
+    private CharacterFSM<ActionState> _actionFSM;
+    private CharacterFSM<PostureState> _PostureFSM;
+    private CharacterFSM<MovementState> _MovementFSM;
     [SerializeField]
     private string defaultState;
 
     [Header("Weapon")]
     Weapon _weapon;
 
+
+    private Animator _animator;
+    public Animator Animator { get => _animator;}
+
     private void Awake()
     {
+        _animator = GetComponent<Animator>();
         _weapon = GetComponent<Weapon>();
-        _actionFSM = new FSM<ActionState>(StateType.Action, _weapon, defaultState);
-        _PostureFSM = new FSM<PostureState>(StateType.Posture, _weapon, defaultState);
-        _MovementFSM = new FSM<MovementState>(StateType.Move, _weapon, defaultState);
+        _actionFSM = new CharacterFSM<ActionState>(StateType.Action, _weapon, defaultState);
+        _PostureFSM = new CharacterFSM<PostureState>(StateType.Posture, _weapon, defaultState);
+        _MovementFSM = new CharacterFSM<MovementState>(StateType.Move, _weapon, defaultState);
     }
 
     void Start()
@@ -53,6 +58,7 @@ public class CharacterController : MonoBehaviour
         _MovementFSM.Run(this);
 
         _actionFSM.ChangeState("Attack",this);
+        _PostureFSM.ChangeState("Crouch", this);
     }
 
     void Update()

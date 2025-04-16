@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharactorAnimationStrategyFactory : MonoBehaviour
+public class CharactorAnimationStrategyFactory 
 {
     public  IWeaponAnimationStrategy CreateStrategy(Weapon weapon)
     {

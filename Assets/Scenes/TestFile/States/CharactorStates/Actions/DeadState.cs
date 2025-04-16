@@ -4,23 +4,22 @@ using UnityEngine;
 
 public class DeadState : CharacterActionState
 {
+    private static int aniName;
     public DeadState(IWeaponAnimationStrategy iWeaponAnimationStrategy) : base(iWeaponAnimationStrategy)
     {
-
+        aniName = Animator.StringToHash(_aniStrategy.GetAnimationName("Dead"));
     }
     public override void Enter(CharacterController characterController)
     {
+        characterController.Animator.Play(aniName);
         base.Enter(characterController);
-        Debug.Log("Enter Dead State");
     }
     public override void Exit()
     {
         base.Exit();
-        Debug.Log("Exit Dead State");
     }
     public override void Update()
     {
         base.Update();
-        Debug.Log("Update Dead State");
     }
 }
