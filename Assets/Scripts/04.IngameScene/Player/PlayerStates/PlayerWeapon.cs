@@ -17,7 +17,7 @@ public struct RangedWeaponStat
     public RangedWeaponStat(bool _isInfiniteAmo, int _maxAmmo, float _reloadDelayTime)
     {
         isInfiniteAmmo = _isInfiniteAmo;
-        maxAmmo = new Stat(_maxAmmo);
+        maxAmmo = new Stat(_maxAmmo,"maxAmmo");
         reloadDelayTime = _reloadDelayTime;
     }
 }
@@ -38,9 +38,9 @@ public struct WeaponStat
         name = _name;
         description = _description;
         iconImage = _iconImage;
-        attackSpeed = new Stat(_attackSpeed);
-        damage = new Stat(_damage);
-        knockbackStrength = new Stat(_knockbackStrength);
+        attackSpeed = new Stat(_attackSpeed,"attackSpeed");
+        damage = new Stat(_damage,"damage");
+        knockbackStrength = new Stat(_knockbackStrength,"knockbackStrength");
         rangedWeaponStat = _rangedWeaponstat;
     }
 }

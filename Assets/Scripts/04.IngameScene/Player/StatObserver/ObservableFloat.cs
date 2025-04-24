@@ -8,6 +8,7 @@ public class ObservableFloat : IStatPublisher
 
     private float result;
     private List<IStatObserver> observers;
+    private string name;
     private float passResult;
     public float Value
     {
@@ -19,7 +20,7 @@ public class ObservableFloat : IStatPublisher
             result = value;
             if (result != passResult)
             {
-                NotifyObservers(result);
+                NotifyObservers(new(result,name));
                 passResult = result;
             }          
         }
@@ -28,11 +29,11 @@ public class ObservableFloat : IStatPublisher
     /// <summary>
     /// »ý¼ºÀÚ
     /// </summary>
-    /// <param name="result"> </param>
-    public ObservableFloat(float result)
+    public ObservableFloat(float result, string floatName)
     {
         this.result = result;
         observers = new List<IStatObserver>();
+        this.name = floatName;
     }
 
     public void AddObserver(IStatObserver observer)
@@ -49,7 +50,7 @@ public class ObservableFloat : IStatPublisher
         observers.Clear();
     }
 
-    public void NotifyObservers(float value)
+    public void NotifyObservers((float,string) value)
     {
         if (observers == null) return;
         foreach (IStatObserver observer in observers)

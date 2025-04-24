@@ -8,5 +8,5 @@ public interface IStatPublisher
 
     public void RemoveObserver(IStatObserver observer);
 
-    public void NotifyObservers(float value);
+    public void NotifyObservers((float,string) value);
 }

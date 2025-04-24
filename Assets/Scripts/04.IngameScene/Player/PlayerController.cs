@@ -47,7 +47,7 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
     private CameraController _cameraController;
     private const float _gravity = -9.81f;
     private Vector3 _velocity = Vector3.zero;
-    private float _jumpSpeed = 0.5f;
+    
     
     // input값 저장, 전달 
     private Vector2 _currentMoveInput;
@@ -71,10 +71,10 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
     private Stat baseMoveSpeed;
     private Stat baseJumpPower;
 
-    public Stat BaseMaxHp => baseMaxHp;
-    public Stat BaseDefence => baseDefence;
-    public Stat BaseMoveSpeed => baseMoveSpeed;
-    public Stat BaseJumpPower => baseJumpPower;
+    public float BaseMaxHp => baseMaxHp.Value;
+    public float BaseDefence => baseDefence.Value;
+    public float BaseMoveSpeed => baseMoveSpeed.Value;
+    public float BaseJumpPower => baseJumpPower.Value;
 
 
     private Dictionary<StatType,Stat> statDictionary;
@@ -130,6 +130,7 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
     // 애니메이션 관련 
     [SerializeField] private RuntimeAnimatorController swordController;
     [SerializeField] private RuntimeAnimatorController gunController;
+    private readonly int MoveSpeedHash = Animator.StringToHash("MoveSpeed");
     public Animator Animator { get; private set; }
     public bool IsGrounded
     {
@@ -166,19 +167,22 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
 
         Debug.Log(baseMaxHp.Value);
 
-        IPassive passive = this.AddComponent<HpRegenerationPassive>();
 
-        passive.ApplyPassive(this);
+        AddStatDecorate(StatType.MoveSpeed, 1f);
 
         AddStatDecorate(StatType.MaxHp, 3);
 
         CurrentHp -= 4;
         RemoveStatDecorate(StatType.MaxHp);
         CurrentHp -= 4;
+
+        IPassive passive = this.AddComponent<HpRegenerationPassive>();
+
+        passive.ApplyPassive(this);
     }
 
     private void Update()
-    {        
+    {   
         Debug.Log(CurrentHp);
         _movementFsm.CurrentStateUpdate();
         _postureFsm.CurrentStateUpdate();
@@ -195,15 +199,15 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         _cameraController.IsIdle = IsIdle;
 
         //플레이어 스텟 설정
-        currentHp = new ObservableFloat(fixedFirstMaxHp);
+        currentHp = new ObservableFloat(fixedFirstMaxHp,"currentHp");
         statDictionary = new Dictionary<StatType, Stat>();
-        baseMaxHp = new Stat(fixedFirstMaxHp);
+        baseMaxHp = new Stat(fixedFirstMaxHp,"baseMaxHp");
         statDictionary.Add(StatType.MaxHp, baseMaxHp);
-        baseDefence = new Stat(fixedFirstDefence);
+        baseDefence = new Stat(fixedFirstDefence, "baseDefence");
         statDictionary.Add(StatType.Defence, baseDefence);
-        baseMoveSpeed = new Stat(fixedFirstMoveSpeed);
+        baseMoveSpeed = new Stat(fixedFirstMoveSpeed, "baseMoveSpeed");
         statDictionary.Add(StatType.MoveSpeed, baseMoveSpeed);
-        baseJumpPower = new Stat(fixedFirstJumpPower);
+        baseJumpPower = new Stat(fixedFirstJumpPower, "baseJumpPower");
         statDictionary.Add(StatType.JumpPower, baseJumpPower);
        
         
@@ -314,7 +318,7 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         // 점프 
         if (IsGrounded)
         {
-            _velocity.y = Mathf.Sqrt(_jumpSpeed * -2f * _gravity);
+            _velocity.y = Mathf.Sqrt(BaseJumpPower * -2f * _gravity);
             SetMovementState("Jump");
         }
     }
@@ -505,6 +509,11 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         Debug.Log($"버프 적용 현재 체력{CurrentHp}");
     }
 
+    public void ChangeMovementSpeed(float value) {
+        this.Animator.SetFloat(MoveSpeedHash, value);
+    }
+
+
     //구매 내역 에 따른 스탯 분배 메소드 필요
     //구매 내역에 따른 Passive 생성, 스킬 생성도 필요
     // 너무 커질 것 같으니 PurchaseManager에서 관리하는 것도 좋을듯
@@ -524,9 +533,14 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
     }
 
     #region 옵저버
-    public void WhenStatChanged(float value)
+    public void WhenStatChanged((float,string) data)
     {
-        Debug.Log($"Stat가 {value}로 변경되었습니다.");
+      Debug.Log($"{data.Item2}가 {data.Item1}로 변경되었습니다.");
+        switch (data.Item2) {
+            case "baseMoveSpeed":
+                ChangeMovementSpeed(data.Item1);
+                break;
+        }
     }
     //변수에 따른 옵저버 구독, 탈퇴 메소드 만들기
     #endregion
