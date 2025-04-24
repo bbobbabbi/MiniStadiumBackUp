@@ -5,7 +5,8 @@ using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public enum ActionState { 
+// 추가되는 스킬은 여기에도 추가작성 필요
+public enum ActionState {
     Idle,
     Attack,
     Hit,
@@ -93,6 +94,14 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         }
     }
 
+    // --------
+    // 패시브 스킬관련
+    [Header("Passive_Skill")]
+    private PassiveFactory _passiveFactory;
+    private List<IPassive> _passiveList;
+
+    public PassiveFactory PassiveFactory => _passiveFactory;
+    public List<IPassive> PassiveList => _passiveList;
 
     // --------
     // 상태 관련
@@ -157,13 +166,7 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         InputManager.instance.Register(this);
 
         Init();
-        // 스텟 + currentHp 옵저버 등록 
-        foreach (var stat in statDictionary)
-        {
-            stat.Value.AddObserver(this);
-        }
-
-        currentHp.AddObserver(this);
+      
 
         Debug.Log(baseMaxHp.Value);
 
@@ -174,16 +177,10 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
 
         CurrentHp -= 4;
         RemoveStatDecorate(StatType.MaxHp);
-        CurrentHp -= 4;
-
-        IPassive passive = this.AddComponent<HpRegenerationPassive>();
-
-        passive.ApplyPassive(this);
     }
 
     private void Update()
     {   
-        Debug.Log(CurrentHp);
         _movementFsm.CurrentStateUpdate();
         _postureFsm.CurrentStateUpdate();
         _actionFsm.CurrentStateUpdate();
@@ -219,6 +216,35 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         _movementFsm.Run(this);
         _postureFsm.Run(this);
         _actionFsm.Run(this);
+
+        // 스텟 + currentHp 옵저버 등록 
+        foreach (var stat in statDictionary)
+        {
+            stat.Value.AddObserver(this);
+        }
+
+        currentHp.AddObserver(this);
+
+
+        //구매 목록에 따른 패시브 적용
+        //Factory를 따로 두어 사용하는게 적절해 보이지만 일단 테스트를 위해 여기에 작성했음
+        _passiveFactory = new PassiveFactory();
+        _passiveList = new List<IPassive>();
+
+        //임시, 구매내역이라 치고 작성
+        List<string> passiveNames = new List<string>();
+        passiveNames.Add("HpRegenerationPassive");
+        passiveNames.Add("IncreasingRandomStatEvery20Seconds");
+        _passiveFactory.CreatePassive(this,passiveNames);
+        foreach (var passive in PassiveList)
+        {
+            passive.ApplyPassive(this);
+        }
+        //스킬 목록 적용
+        //플레이어의 ActionFsm 내에 상태를 넣어야 함
+        //AddSkillState에 넣을 스킬 목록을 집어넣으면 알아서 State가 생성됨
+        //단 ActionState과 SkillFactory에 등록해두어야 추가 가능
+        ActionFsm.AddSkillState(new List<string> { "MovementSkills" });
     }
 
     public void SetMovementState(string stateName)
@@ -472,7 +498,10 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         }
         if(stat == StatType.MaxHp)
         {
-            CurrentHp= baseMaxHp.Value;
+            if (CurrentHp >= baseMaxHp.Value)
+            {
+                CurrentHp = baseMaxHp.Value;
+            }
             Debug.Log($"버프 적용 현재 체력{CurrentHp}");
         }
     }
@@ -488,9 +517,12 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         }
         if (stat == StatType.MaxHp)
         {
-            CurrentHp = baseMaxHp.Value;
+            if (CurrentHp >= baseMaxHp.Value)
+            {
+                CurrentHp = baseMaxHp.Value;
+            }
+            Debug.Log($"버프 적용 현재 체력{CurrentHp}");
         }
-        Debug.Log($"버프 적용 현재 체력{CurrentHp}");
     }
     /// <summary>
     /// 지정 인덱스의 모든 데코레이트 삭제
@@ -504,9 +536,12 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
         }
         if (stat == StatType.MaxHp)
         {
-            CurrentHp= baseMaxHp.Value;
+            if (CurrentHp >= baseMaxHp.Value)
+            {
+                CurrentHp = baseMaxHp.Value;
+            }
+            Debug.Log($"버프 적용 현재 체력{CurrentHp}");
         }
-        Debug.Log($"버프 적용 현재 체력{CurrentHp}");
     }
 
     public void ChangeMovementSpeed(float value) {
@@ -542,6 +577,5 @@ public class PlayerController : MonoBehaviour, IInputEvents , IStatObserver
                 break;
         }
     }
-    //변수에 따른 옵저버 구독, 탈퇴 메소드 만들기
     #endregion
 }
